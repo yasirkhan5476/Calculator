@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 
-class calculator extends StatefulWidget {
-  const calculator({super.key});
+class Calculator extends StatefulWidget {
+   Calculator({super.key});
 
   @override
-  State<calculator> createState() => _calculatorState();
+  State<Calculator> createState() => _CalculatorState();
 }
 
-class _calculatorState extends State<calculator> {
-  // Whatever is currently shown on the screen.
+class _CalculatorState extends State<Calculator> {
   String display = '0';
 
-  // The buttons, laid out exactly the way they will appear:
-  // 4 rows, 4 buttons per row.
   final List<List<String>> buttonRows = [
     ['7', '8', '9', '/'],
     ['4', '5', '6', '*'],
@@ -20,9 +17,10 @@ class _calculatorState extends State<calculator> {
     ['C', '0', '=', '+'],
   ];
 
-  // ---------- FUNCTIONS ----------
+  // --------------------------------------------------
+  // BUTTON FUNCTION
+  // --------------------------------------------------
 
-  // Runs whenever any button is tapped.
   void onButtonTap(String label) {
     setState(() {
       if (label == 'C') {
@@ -30,21 +28,22 @@ class _calculatorState extends State<calculator> {
       } else if (label == '=') {
         display = calculateResult(display);
       } else {
-        if (display == '0') {
+        if (display == '0' || display == 'Error') {
           display = label;
         } else {
-          display = display + label;
+          display += label;
         }
       }
     });
   }
 
-  // Very simple calculator: only handles ONE operator, e.g. "12+7".
-  // Good enough for a first Flutter UI project.
+  // --------------------------------------------------
+  // CALCULATE RESULT
+  // --------------------------------------------------
+
   String calculateResult(String expression) {
     String operator = '';
 
-    // Find the operator
     for (int i = 0; i < expression.length; i++) {
       String character = expression[i];
 
@@ -57,134 +56,237 @@ class _calculatorState extends State<calculator> {
       }
     }
 
-    if (operator == '') {
+    if (operator.isEmpty) {
       return expression;
     }
 
-    // Split all numbers
-    List<String> parts = expression.split(operator);
+    try {
+      List<String> parts = expression.split(operator);
 
-    double result = double.parse(parts[0]);
+      if (parts.length != 2 || parts[0].isEmpty || parts[1].isEmpty) {
+        return 'Error';
+      }
 
-    // Calculate with all remaining numbers
-    for (int i = 1; i < parts.length; i++) {
-      double number = double.parse(parts[i]);
+      double number1 = double.parse(parts[0]);
+      double number2 = double.parse(parts[1]);
+
+      double result;
 
       if (operator == '+') {
-        result += number;
+        result = number1 + number2;
       } else if (operator == '-') {
-        result -= number;
+        result = number1 - number2;
       } else if (operator == '*') {
-        result *= number;
-      } else if (operator == '/') {
-        if (number == 0) {
+        result = number1 * number2;
+      } else {
+        if (number2 == 0) {
           return 'Error';
         }
-        result /= number;
+
+        result = number1 / number2;
       }
-    }
 
-    return result.toString();
+      if (result == result.toInt()) {
+        return result.toInt().toString();
+      }
+
+      return result.toString();
+    } catch (e) {
+      return 'Error';
+    }
   }
-  // Picks a color for a button just by looking at its label.
-  Color colorForButton(String label) {
+
+  Color getButtonColor(String label) {
+    // Clear button
     if (label == 'C') {
-      return Colors.red;
-    } else if (label == '+' || label == '-' || label == '*' ||
-        label == '/' || label == '=') {
-      return Colors.orange;
-    } else {
-      return Colors.grey.shade800;
+      return  Color(0xFFF3E8FF);
     }
+
+    // Operators
+    if (label == '+' || label == '-' || label == '*' || label == '/') {
+      return  Color(0xFFE9D5FF);
+    }
+
+    // Equal button
+    if (label == '=') {
+      return  Color(0xFF7C3AED);
+    }
+
+    // Number buttons
+    return Colors.white;
   }
 
+  // --------------------------------------------------
+  // BUTTON TEXT COLORS
+  // --------------------------------------------------
 
-  Widget myComponent(String label, {void Function()? onTap}){
-    return InkWell(
-      onTap:onTap,
-      child: Container(
-        height: 100,
-        width: 150,
-        color: Colors.blue,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+  Color getTextColor(String label) {
+    if (label == '=') {
+      return Colors.white;
+    }
+
+    if (label == 'C') {
+      return  Color(0xFF9333EA);
+    }
+
+    if (label == '+' || label == '-' || label == '*' || label == '/') {
+      return  Color(0xFF7E22CE);
+    }
+
+    return  Color(0xFF312E81);
+  }
+
+  Widget calculatorButton(String label) {
+    return Expanded(
+      child: Padding(
+        padding:  EdgeInsets.all(6),
+
+        child: GestureDetector(
+          onTap: () => onButtonTap(label),
+
+          child: Container(
+            height: 75,
+
+            decoration: BoxDecoration(
+              color: getButtonColor(label),
+
+              borderRadius: BorderRadius.circular(22),
+
+              border: Border.all(color:  Color(0xFFE9D5FF), width: 1),
+
+              boxShadow:  [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+
+            child: Center(
+              child: Text(
+                label,
+
+                style: TextStyle(
+                  color: getTextColor(label),
+                  fontSize: label == 'C' ? 22 : 26,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
         ),
-        child: Text(label),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Simplified Calculator')),
-      body: InkWell(
-        onTap: (){
-        },
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: Colors.grey,
+      backgroundColor:  Color(0xFFFAF7FF),
+
+      appBar: AppBar(
+        backgroundColor:  Color(0xFFFAF7FF),
+
+        elevation: 0,
+
+        title:  Text(
+          'Calculator',
+          style: TextStyle(
+            color: Color(0xFF4C1D95),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        centerTitle: true,
+      ),
+
+      body: SafeArea(
+        child: Padding(
+          padding:  EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+
           child: Column(
             children: [
-              // ----- SCREEN: shows the current display text -----
-              Container(
-                width: double.infinity,
-                height: 150,
-                color: Colors.grey,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.all(20),
-                
-                child: Text(
-                  display,
-                  style: const TextStyle(color: Colors.white, fontSize: 40),
+              Expanded(
+                flex: 3,
+
+                child: Container(
+                  width: double.infinity,
+
+                  padding: EdgeInsets.all(25),
+
+                  decoration: BoxDecoration(
+                    color:   Color(0xFFF3E8FF),
+
+                    borderRadius: BorderRadius.circular(30),
+
+                    border: Border.all(
+                      color:  Color(0xFFE9D5FF),
+                      width: 1,
+                    ),
+
+                    boxShadow:  [
+                      BoxShadow(
+                        color: Color(0x227C3AED),
+                        blurRadius: 15,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+
+                    children: [
+                         Text(
+                        'RESULT',
+
+                        style: TextStyle(
+                          color: Color(0xFF9F7AEA),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
+                        ),
+                      ),
+
+                       SizedBox(height: 10),
+
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+
+                        child: Text(
+                          display,
+
+                          style:  TextStyle(
+                            color: Color(0xFF4C1D95),
+                            fontSize: 52,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              // Row(
-              //   children: [
-              //     myComponent("1", onTap: (){
-              //       display ="1";
-              //     }),
-              //     myComponent("2"),
-              //     myComponent("3"),
-              //     myComponent("4"),
-              //
-              //   ],
-              // ),
+               SizedBox(height: 20),
+              Expanded(
+                flex: 7,
 
-              // ----- BUTTONS: one Row per row of buttons -----
-              // FOR LOOP: go through every row in buttonRows.
-              for (List<String> row in buttonRows)
-                Row(
+                child: Column(
                   children: [
-
-                    for (String label in row)
+                    for (List<String> row in buttonRows)
                       Expanded(
-
-                        child: GestureDetector(
-                          onTap: () => onButtonTap(label),
-                          child: Container(
-                            width: 90,
-                            height: 90,
-                            margin: const EdgeInsets.all(6),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: colorForButton(label),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              label,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 26,
-                              ),
-                            ),
-                          ),
+                        child: Row(
+                          children: [
+                            for (String label in row) calculatorButton(label),
+                          ],
                         ),
                       ),
                   ],
                 ),
+              ),
             ],
           ),
         ),
